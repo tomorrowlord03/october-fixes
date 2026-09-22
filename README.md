@@ -34,6 +34,18 @@ This repository documents root-cause analyses, verified reproductions, and repai
 
 ---
 
+### 4. Agent Setup Modal Terminal Crash (`The filename, directory name, or volume label syntax is incorrect`) & False "Needs setup" Status
+* **Full Report:** [`WINDOWS_SETUP_SHELL_SYNTAX_BUG.md`](./WINDOWS_SETUP_SHELL_SYNTAX_BUG.md)
+* **Symptom:** Clicking **"Set up"** under Settings -> Agents opens a modal that crashes immediately with:  
+  `"The filename, directory name, or volume label syntax is incorrect."`  
+  Additionally, Antigravity displays a red dot `"Needs setup"` even when authenticated and functioning via CLI OAuth.
+* **Root Cause:**
+  1. `loginCmdFor(platform, harness)` formats the prepended PATH string using PowerShell syntax (`$env:PATH = "...;$env:PATH"; <command>`). However, October executes setup commands on Windows via `cmd.exe /d /s /c`. Passing PowerShell `$env:PATH` syntax into `cmd.exe` causes a fatal syntax crash.
+  2. October's supervisor checks only for `GEMINI_API_KEY` + `modelProvider: "gemini"` to determine Antigravity readiness, explicitly bypassing Google OAuth/keyring inspection.
+* **Fix & Workaround:** Configure October's terminal shell in `settings.json` to PowerShell (`C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`) or patch `loginCmdFor` upstream to use cmd.exe syntax (`set "PATH=...;%PATH%" && <cmd>`).
+
+---
+
 ## Utilities
 
 * [`scripts/repair-october-ownership.ps1`](./scripts/repair-october-ownership.ps1): A non-destructive PowerShell utility to inspect, backup, and resolve ownership journal conflicts in `~/.october/bus-ownership-v1.json`.
