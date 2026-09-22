@@ -25,6 +25,15 @@ This repository documents root-cause analyses, verified reproductions, and repai
 
 ---
 
+### 3. "Could not reopen this terminal" on Lingering Fallback Shell
+* **Full Report:** [`REOPEN_FALLBACK_SHELL_BUG.md`](./REOPEN_FALLBACK_SHELL_BUG.md)
+* **Symptom:** When an agent exits and the user clicks the recovery banner **"Reopen Antigravity"**, the UI displays:  
+  `"Could not reopen this terminal. Your saved session is preserved. Try again."`
+* **Root Cause:** October drops into a fallback `cmd.exe` process upon agent exit. `reopenStoppedTerminal` checks if the terminal process has terminated (`!health.exited`). Because `cmd.exe` is still actively running in the PTY, October rejects the reopen request with `"This terminal is no longer stopped."`.
+* **Fix & Workaround:** Type `exit` into the active shell prompt to terminate the fallback shell, then click **"Reopen Antigravity"**. Upstream recommendation: automatically terminate lingering shell processes on reopen.
+
+---
+
 ## Utilities
 
 * [`scripts/repair-october-ownership.ps1`](./scripts/repair-october-ownership.ps1): A non-destructive PowerShell utility to inspect, backup, and resolve ownership journal conflicts in `~/.october/bus-ownership-v1.json`.
