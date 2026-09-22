@@ -48,6 +48,7 @@ This repository documents root-cause analyses, verified reproductions, and repai
 
 ### 5. Agent MCP Disconnection on Node Restart (`MCP ERROR (october-bus)`) & Dynamic Process Bridge
 * **Full Report:** [`MCP_DISCONNECTED_CAPABILITY_STALE_BUG.md`](./MCP_DISCONNECTED_CAPABILITY_STALE_BUG.md)
+* **Upstream Tracking:** [october-dev/october-bus#129](https://github.com/october-dev/october-bus/issues/129)
 * **Symptom:** Whenever an agent terminal node restarts (due to crash, model change, or terminal reload), the agent displays `MCP ERROR (october-bus) - Disconnected`. Direct HTTP queries to October's MCP endpoint return `400 Bad Request: {"error": "UNAUTHENTICATED: invalid MCP execution capability"}`.
 * **Root Cause:** October generates a new unique execution capability token (`mcpCapability`) in `~/.october/bus-processes.json` upon every process spawn. However, static configuration files (`mcp_config.json`) retain the stale capability token from the prior session. Because October validates capabilities against live PIDs, the stale token is rejected.
 * **Fix & Workaround:** Use the verified zero-dependency dynamic stdio bridge (`bus-process-bridge.mjs` + `bus-process-resolver.mjs`). The bridge dynamically inspects `process.ppid`, walks the process tree via `Win32_Process` (or `ps`), resolves the live capability from `bus-processes.json` at runtime, and proxies JSON-RPC over stdio without requiring configuration file rewrites.

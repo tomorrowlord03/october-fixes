@@ -4,6 +4,8 @@
 
 In multi-agent canvas workflows on [October Canvas](https://october.dev), whenever an agent terminal node restarts—whether caused by an agent exit, crash, model change, or user-initiated terminal reload—the agent enters a persistent disconnected state:
 
+> **Upstream Issue:** [october-dev/october-bus#129](https://github.com/october-dev/october-bus/issues/129)
+
 ```text
 Configured MCP servers:
   october-bus - Disconnected
