@@ -46,9 +46,19 @@ This repository documents root-cause analyses, verified reproductions, and repai
 
 ---
 
+### 5. Agent MCP Disconnection on Node Restart (`MCP ERROR (october-bus)`) & Dynamic Process Bridge
+* **Full Report:** [`MCP_DISCONNECTED_CAPABILITY_STALE_BUG.md`](./MCP_DISCONNECTED_CAPABILITY_STALE_BUG.md)
+* **Symptom:** Whenever an agent terminal node restarts (due to crash, model change, or terminal reload), the agent displays `MCP ERROR (october-bus) - Disconnected`. Direct HTTP queries to October's MCP endpoint return `400 Bad Request: {"error": "UNAUTHENTICATED: invalid MCP execution capability"}`.
+* **Root Cause:** October generates a new unique execution capability token (`mcpCapability`) in `~/.october/bus-processes.json` upon every process spawn. However, static configuration files (`mcp_config.json`) retain the stale capability token from the prior session. Because October validates capabilities against live PIDs, the stale token is rejected.
+* **Fix & Workaround:** Use the verified zero-dependency dynamic stdio bridge (`bus-process-bridge.mjs` + `bus-process-resolver.mjs`). The bridge dynamically inspects `process.ppid`, walks the process tree via `Win32_Process` (or `ps`), resolves the live capability from `bus-processes.json` at runtime, and proxies JSON-RPC over stdio without requiring configuration file rewrites.
+
+---
+
 ## Utilities
 
 * [`scripts/repair-october-ownership.ps1`](./scripts/repair-october-ownership.ps1): A non-destructive PowerShell utility to inspect, backup, and resolve ownership journal conflicts in `~/.october/bus-ownership-v1.json`.
+* [`scripts/bus-process-resolver.mjs`](./scripts/bus-process-resolver.mjs): Dynamically inspects parent process ancestry to look up active PID bindings and live capability tokens from `~/.october/bus-processes.json`.
+* [`scripts/bus-process-bridge.mjs`](./scripts/bus-process-bridge.mjs): Lightweight stdio MCP bridge runner that dynamically injects resolved process credentials into October's stdio transport.
 
 ---
 
